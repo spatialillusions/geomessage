@@ -1,0 +1,91 @@
+<html>
+
+<head>
+	<style>
+		body {
+			font-family: "Open Sans", Arial, sans-serif;
+			font-size: 0.9rem;
+			margin: 1rem 2rem 2rem;
+			color: #34495E;
+		}
+	</style>
+	<script src="../dist/geomessage.js"></script>
+</head>
+
+<body onload="document.getElementById('files').addEventListener('change', loadFileAsText, false)">
+	Geomessages file:
+	<input type="file" id="files" name="files[]">
+	<br>
+	<h3>Read GeoMessages file:
+		<i>new GeoMessage.read(file).asGeoJSON()</i>
+	</h3>
+	<table border=0>
+		<tr>
+			<td valign="top">
+				<textarea id="geomessage" style="width: 400px; height: 500px;">
+						</textarea>
+			</td>
+			<td>
+
+				<link rel="stylesheet" href="http://openlayers.org/en/v3.17.1/css/ol.css" type="text/css">
+				<script src="http://openlayers.org/en/v3.17.1/build/ol.js"></script>
+				<div id="map" class="map" style="width: 700px; height: 500px;"></div>
+				<script>
+					var vectorSource = new ol.source.Vector();
+					var vectorLayer = new ol.layer.Vector({
+						source: vectorSource
+					});
+
+					var map = new ol.Map({
+						layers: [
+							new ol.layer.Tile({
+								source: new ol.source.OSM()
+							}),
+							vectorLayer
+						],
+						target: 'map',
+						controls: ol.control.defaults({
+							attributionOptions: ({
+								collapsible: false
+							})
+						}),
+						view: new ol.View({
+							center: [0, 0],
+							zoom: 2
+						})
+					});
+				</script>
+			</td>
+		</tr>
+	</table>
+
+	<br>
+
+
+
+
+
+
+
+	<script>
+					function loadFileAsText(evt) {
+						var fileToLoad = evt.target.files[0];
+						var fileReader = new FileReader();
+						fileReader.onload = function (fileLoadedEvent) {
+							var file = fileLoadedEvent.target.result;
+							var geoJSON = new GeoMessage().read(file).asGeoJSON();
+							document.getElementById('geomessage').value = JSON.stringify(geoJSON, null, 2);
+
+							//Put it on an open layers map
+							vectorSource.clear();
+							vectorSource.addFeatures((new ol.format.GeoJSON()).readFeatures(geoJSON, { featureProjection: ol.proj.get('EPSG:3857') }));
+							var extent = vectorSource.getExtent();
+							map.getView().fit(extent, map.getSize());
+
+						};
+						fileReader.readAsText(fileToLoad, "UTF-8");
+					}
+	</script>
+</body>
+
+</html>
